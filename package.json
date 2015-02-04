@@ -8,7 +8,8 @@
     "mongoose": "^3.8.20",
     "mongoose-promised": "^0.1.0",
     "mongoose-schema-extend": "^0.1.7",
-    "owl-deepcopy": "0.0.4"
+    "owl-deepcopy": "0.0.4",
+    "q": "^1.1.2"
   },
   "repository": ""
 }

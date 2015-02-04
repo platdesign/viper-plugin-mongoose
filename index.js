@@ -4,8 +4,9 @@ var mongoose 	= require('mongoose-promised');
 var fs 			= require('fs');
 var path 		= require('path');
 var extend		= require('extend');
+var Q 			= require('q');
 
-var schemeExtend = require('./lib/schemaExtender.js');
+var schemaExtender = require('./lib/schemaExtender.js');
 
 var defaults = {
 	configId: 'mongoose'
@@ -33,39 +34,52 @@ module.exports = function() {
 
 			// Create provider for connection
 			that.provider(serviceName, function() {
+
+				var d = Q.defer();
+
 				// create connection
 				var con = mongoose.connect(args.uri, args.options, function(err) {
 					if(err) {
-						return console.log(('Connection ('+serviceName+') failed. '+err.message).red);
+						// Log failure
+						console.log(('Connection ('+serviceName+') failed. '+err.message).red);
+
+						// reject promise
+						d.reject(err);
+
+						return;
 					}
 
+					// Log success! =)
 					console.log(('Connection ('+serviceName+') has been established successfully.').cyan);
+
+					// Make schemas extendable by default
+					schemaExtender(con);
+
+
+					// Load models from modelsPath
+					var modelsPath = path.resolve( that.cwd(), args.modelsPath );
+					if( fs.existsSync(modelsPath) ) {
+						fs.readdirSync( modelsPath ).forEach(function(item) {
+							var itemPath = path.join( modelsPath, item );
+							var stat = fs.statSync(itemPath);
+							if(stat.isFile()) {
+								var modelFile = require(itemPath);
+								modelFile(con, mongoose.Schema, mongoose.Schema.Types);
+							}
+						});
+					}
+
+					// resolve with connection
+					d.resolve(con);
 				});
 
-				schemeExtend(con);
 
 
-				var modelsPath = path.resolve( that.cwd(), args.modelsPath );
 
-				if( fs.existsSync(modelsPath) ) {
-
-					fs.readdirSync( modelsPath ).forEach(function(item) {
-
-						var itemPath = path.join( modelsPath, item );
-
-						var stat = fs.statSync(itemPath);
-						if(stat.isFile()) {
-							var modelFile = require(itemPath);
-							modelFile(con, mongoose.Schema, mongoose.Schema.Types);
-						}
-
-					});
-
-				}
 
 				// return service function which returns connection-object
 				return function() {
-					return con;
+					return d.promise;
 				};
 			});
 
