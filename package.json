@@ -4,12 +4,10 @@
   "author": "plati <mail@platdesign.de>",
   "version": "0.0.5",
   "dependencies": {
-    "extend": "^2.0.0",
     "mongoose": "^3.8.20",
     "mongoose-promised": "^0.1.0",
-    "mongoose-schema-extend": "^0.1.7",
     "owl-deepcopy": "0.0.4",
-    "q": "^1.1.2"
+    "extend": "^2.0.0"
   },
   "repository": ""
 }
